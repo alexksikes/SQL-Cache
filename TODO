@@ -1,0 +1,11 @@
+# TODO
+# [*] make_sql_cache_table.py
+# [ ] sql_cache.cache decorator to cache the ouput a function
+# [ ] what about compression?
+# [ ] get_multi and set_multi in one SQL query.
+# [ ] per facet cache with sql_cache.get_many(*keys) for still one sql query
+# [ ] value should probably be a blob
+
+# NOTE:
+# We had to use pickle + base64 see http://bugs.python.org/issue2980 
+# This table could get very large, very quickly, we should instead have a max KB.
