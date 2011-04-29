@@ -1,4 +1,4 @@
-'''A simple key-value MySQL store for small chunks of arbitrary data.
+"""A simple key-value MySQL store for small chunks of arbitrary data.
 
 You need a table of the following schema:
 
@@ -11,7 +11,7 @@ create table cache (
     index (sticky),
     index (datetime)
 ) charset utf8 engine MyISAM;
-'''
+"""
 
 __author__ = 'Alex Ksikes (alex.ksikes@gmail.com)'
 
@@ -34,6 +34,13 @@ class Cache(object):
         self.db = db
         
     def get(self, query):
+        """
+        Get values from the cache given a query. 
+        
+        The variable query is a string or an object with a unique representation.
+        An object with a unique representation must implement instance variable "uniq".
+        """
+        query = get_unique_repr(query)
         key = self._make_key(query)
         r = self.db.select('cache', vars=dict(key=key), where='_key = $key', limit=1)
         r = web.listget(r, 0)
@@ -46,6 +53,20 @@ class Cache(object):
         return value
         
     def set(self, query, value, replace=False, sticky=False):
+        """
+        Set values to the cache given a query and a value.  
+        
+        The variable query is a string or an object with a unique representation.
+        An object with a unique representation must implement instance variable "uniq".
+        
+        The value may be any serializable object.
+        
+        When replace is True, the value will be replaced if it already exists.
+        
+        When sticky is True, the value will not be removed from the cache unless the cache 
+        is clear with also_sticky flag on.
+        """
+        query = get_unique_repr(query)
         key = self._make_key(query)
         value = base64.b64encode(pickle.dumps(value))
         
@@ -74,13 +95,12 @@ class Cache(object):
     def _make_key(self, query):
         return md5.new(_utf8(query)).hexdigest()
 
-    @classmethod
-    def clear(cls, db, also_sticky=False):
+    def clear(self, also_sticky=False):
         if not also_sticky:
             where = 'sticky != 1'
         else:
-            where = ''
-        db.delete('cache', where=where)
+            where = '1'
+        self.db.delete('cache', where=where)
         
     @classmethod
     def make_sql_table(cls, db, drop=False):
@@ -98,6 +118,14 @@ class Cache(object):
         ') charset utf8 engine MyISAM;'
         )
 
+def get_unique_repr(query):
+    """
+    Get a unique representation of the query. 
+    
+    For example "SQL_cache" and "sql_cache" may be mapped to the same key.
+    """
+    return getattr(query, 'uniq', query)
+
 def set_DB(**db_params):
     global DB
     DB = web.database(**db_params)
@@ -111,7 +139,7 @@ def set(query, value, replace=False, sticky=False):
 
 def clear(db=None, also_sticky=False):
     db = db or DB
-    Cache.clear(db, also_sticky)
+    Cache(db=db).clear(also_sticky)
 
 def make_sql_table(db=None, drop=False):
     db = db or DB
