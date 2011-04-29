@@ -8,6 +8,7 @@ setup(name='SQLCache',
     author='Alex Ksikes',
     author_email='alex.ksikes@gmail.com',
     url='https://github.com/alexksikes/SQL-Cache',
+    download_url='https://github.com/alexksikes/SQL-Cache/zipball/v0.3',
     py_modules=['sql_cache'],
     long_description='A simple key-value MySQL store for small chunks of arbitrary data (strings, objects).',
     license='GPL'
